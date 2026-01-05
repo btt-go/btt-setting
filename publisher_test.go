@@ -12,7 +12,7 @@ import (
 )
 
 func TestPublisher_Publish(t *testing.T) {
-	useMiniredis := false
+	useMiniredis := true
 
 	// 1. 初始化 Redis
 	addr := "127.0.0.1:6379"
