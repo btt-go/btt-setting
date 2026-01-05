@@ -1,9 +1,5 @@
 package bttsetting
 
-import (
-	"reflect"
-)
-
 // Match 为给定的输入标签查找最佳匹配规则。
 // 规则按照 Slice 顺序匹配，一旦匹配成功立即返回（列表顺序即优先级）。
 func Match(rules []Rule, inputTags map[string]any) *Rule {
@@ -62,43 +58,76 @@ func matchOne(rule *Rule, inputTags map[string]any) bool {
 }
 
 func valuesEqual(a, b any) bool {
-	if a == b {
-		return true
+	if a == nil {
+		return b == nil
+	}
+	if b == nil {
+		return false
 	}
 
-	// 数字比较辅助方法
-	// JSON unmarshal 通常产生 float64，而输入可能是 int
-	va := reflect.ValueOf(a)
-	vb := reflect.ValueOf(b)
-
-	if isNumber(va.Kind()) && isNumber(vb.Kind()) {
-		// 统一转换为 float64 进行比较
-		fa, _ := toFloat(va)
-		fb, _ := toFloat(vb)
-		return fa == fb
+	// 使用 Type Switch 分别处理不同类型的比较，避免直接 a == b 导致 Panic (当类型不可比较时)
+	switch va := a.(type) {
+	case string:
+		vb, ok := b.(string)
+		return ok && va == vb
+	case bool:
+		vb, ok := b.(bool)
+		return ok && va == vb
+	case int:
+		if vb, ok := b.(int); ok {
+			return va == vb
+		}
+	case int64:
+		if vb, ok := b.(int64); ok {
+			return va == vb
+		}
+	case float64:
+		if vb, ok := b.(float64); ok {
+			return va == vb
+		}
 	}
 
-	return false
+	// 尝试将两边都转换为 float64 进行比较
+	// 这处理了跨类型数字比较，如 int(3) == float64(3.0)
+	fa, okA := toFloat64(a)
+	if !okA {
+		return false
+	}
+
+	fb, okB := toFloat64(b)
+	if !okB {
+		return false
+	}
+
+	return fa == fb
 }
 
-func isNumber(k reflect.Kind) bool {
-	switch k {
-	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
-		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64,
-		reflect.Float32, reflect.Float64:
-		return true
-	}
-	return false
-}
-
-func toFloat(v reflect.Value) (float64, bool) {
-	switch v.Kind() {
-	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		return float64(v.Int()), true
-	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-		return float64(v.Uint()), true
-	case reflect.Float32, reflect.Float64:
-		return v.Float(), true
+func toFloat64(v any) (float64, bool) {
+	switch val := v.(type) {
+	case int:
+		return float64(val), true
+	case float64:
+		return val, true
+	case int64:
+		return float64(val), true
+	case float32:
+		return float64(val), true
+	case int32:
+		return float64(val), true
+	case int16:
+		return float64(val), true
+	case int8:
+		return float64(val), true
+	case uint:
+		return float64(val), true
+	case uint64:
+		return float64(val), true
+	case uint32:
+		return float64(val), true
+	case uint16:
+		return float64(val), true
+	case uint8:
+		return float64(val), true
 	}
 	return 0, false
 }
