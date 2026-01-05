@@ -1,10 +1,10 @@
 module github.com/btt-go/btt-setting
 
-go 1.25.5
+go 1.20
 
 require (
 	github.com/alicebob/miniredis/v2 v2.35.0
-	github.com/redis/go-redis/v9 v9.17.2
+	github.com/redis/go-redis/v9 v9.0.5
 )
 
 require (

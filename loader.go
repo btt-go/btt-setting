@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log/slog"
+	"log"
 	"strings"
 
 	"github.com/redis/go-redis/v9"
@@ -111,7 +111,7 @@ func (c *Config) Load(ctx context.Context) error {
 		return true
 	})
 
-	slog.Info("load config success", "version", c.version, "allHash", allHash)
+	log.Printf("load config success: version=%d, allHash=%s", c.version, allHash)
 
 	return nil
 }

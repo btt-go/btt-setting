@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log/slog"
+	"log"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -24,14 +24,14 @@ func (c *Config) Watch(ctx context.Context) error {
 		versionsKey := KeyVersions()
 		remoteHash, err := c.rdb.HGet(ctx, versionsKey, fmt.Sprintf("%d", c.version)).Result()
 		if err != nil && !errors.Is(err, redis.Nil) {
-			slog.Error("check consistency failed", "err", err)
+			log.Printf("check consistency failed: %v", err)
 			return
 		}
 
 		// 比较本地和远程
 		currentSS := c.snapshot.Load().(*Snapshot)
 		if remoteHash != "" && remoteHash != currentSS.AllHash {
-			slog.Info("version hash mismatch detected, reloading", "local", currentSS.AllHash, "remote", remoteHash)
+			log.Printf("version hash mismatch detected, reloading: local=%s, remote=%s", currentSS.AllHash, remoteHash)
 			_ = c.Load(ctx)
 		}
 	}
@@ -63,7 +63,7 @@ func (c *Config) Watch(ctx context.Context) error {
 			continue
 		}
 		if err != nil {
-			slog.Error("watch failed", "err", err)
+			log.Printf("watch failed: %v", err)
 			// 退避等待，防止死循环刷日志
 			select {
 			case <-ctx.Done():
